@@ -1,0 +1,6 @@
+{
+  "name": "Human Clock",
+  "description": "An interactive parallel time-reading tool that reduces hours to single digits (1–9) using digital roots and the vortex doubling cycle while preserving exact minutes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
