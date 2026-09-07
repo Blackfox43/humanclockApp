@@ -1,5 +1,7 @@
 export type TimeFormat = '12h' | '24h';
 
+export type AppPageId = 'dial' | 'rules' | 'table' | 'digital' | 'code';
+
 export interface ClockState {
   date: Date;
   hour12: number;

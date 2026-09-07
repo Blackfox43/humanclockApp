@@ -1,5 +1,5 @@
 import React from 'react';
-import { TimeFormat, ClockState } from '../types';
+import { TimeFormat, ClockState, AppPageId } from '../types';
 import { Clock, Printer, Share2, Compass, Layers, Table2, BookOpen, Sparkles } from 'lucide-react';
 
 interface NavbarProps {
@@ -8,6 +8,7 @@ interface NavbarProps {
   onOpenPrintGuide: () => void;
   onOpenCarousel: () => void;
   onOpenShareModal: () => void;
+  onSelectPage?: (page: AppPageId) => void;
   currentClockState: ClockState;
 }
 
@@ -17,6 +18,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenPrintGuide,
   onOpenCarousel,
   onOpenShareModal,
+  onSelectPage,
   currentClockState,
 }) => {
   const currentHumanHour =
@@ -28,8 +30,12 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="sticky top-0 z-40 w-full bg-slate-950/85 backdrop-blur-md border-b border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         {/* Logo and Brand */}
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full border-2 border-amber-500 flex items-center justify-center shrink-0">
+        <button
+          onClick={() => onSelectPage?.('dial')}
+          className="flex items-center gap-3 text-left hover:opacity-90 transition-opacity cursor-pointer group"
+          title="Go to Live Clock Dial"
+        >
+          <div className="w-8 h-8 rounded-full border-2 border-amber-500 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
             <div className="w-1 h-3.5 bg-amber-500 rounded-full" />
           </div>
           <div>
@@ -45,7 +51,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               Parallel Time System • Digital Roots & Vortex Doubling
             </p>
           </div>
-        </div>
+        </button>
 
         {/* Live Parallel Time Pill */}
         <div className="hidden lg:flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs font-mono">
