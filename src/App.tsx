@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { TimeFormat, ClockState, AppPageId } from './types';
 import { deriveClockState, formatTwoDigits, calculateDigitalRoot24, formatCanonicalExample } from './utils/vortexMath';
 import { Navbar } from './components/Navbar';
@@ -471,6 +472,8 @@ export default function App() {
         isOpen={isCarouselOpen}
         onClose={() => setIsCarouselOpen(false)}
       />
+      
+      <Analytics />
     </div>
   );
 }
