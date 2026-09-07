@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { TimeFormat, ClockState, AppPageId } from './types';
+import { TimeFormat, ClockState, AppPageId, ViewMode } from './types';
 import { deriveClockState, formatTwoDigits, calculateDigitalRoot24, formatCanonicalExample } from './utils/vortexMath';
 import { Navbar } from './components/Navbar';
 import { PageNavigation, PAGES } from './components/PageNavigation';
 import { PageFooterPagination } from './components/PageFooterPagination';
 import { LiveClockHero } from './components/LiveClockHero';
+import { MinimalModeView } from './components/MinimalModeView';
 import { ExplanationCard } from './components/ExplanationCard';
 import { ConversionRules } from './components/ConversionRules';
 import { SimpleDigitalFormatSection } from './components/SimpleDigitalFormatSection';
@@ -48,6 +49,27 @@ export default function App() {
   });
 
   const [timeFormat, setTimeFormat] = useState<TimeFormat>('24h');
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('human-clock-view-mode');
+      if (saved === 'minimal' || saved === 'full') return saved as ViewMode;
+      const urlParams = new URLSearchParams(window.location.search);
+      const modeParam = urlParams.get('mode');
+      if (modeParam === 'minimal' || modeParam === 'full') return modeParam as ViewMode;
+    }
+    return 'full';
+  });
+
+  const toggleViewMode = () => {
+    setViewMode((prev) => {
+      const next = prev === 'minimal' ? 'full' : 'minimal';
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('human-clock-view-mode', next);
+      }
+      return next;
+    });
+  };
+
   const [isPrintGuideOpen, setIsPrintGuideOpen] = useState<boolean>(false);
   const [isCarouselOpen, setIsCarouselOpen] = useState<boolean>(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
@@ -167,6 +189,8 @@ export default function App() {
       <Navbar
         timeFormat={timeFormat}
         onToggleTimeFormat={toggleTimeFormat}
+        viewMode={viewMode}
+        onToggleViewMode={toggleViewMode}
         onOpenPrintGuide={() => setIsPrintGuideOpen(true)}
         onOpenCarousel={() => setIsCarouselOpen(true)}
         onOpenShareModal={() => handleOpenShare()}
@@ -174,11 +198,13 @@ export default function App() {
         currentClockState={clockState}
       />
 
-      {/* Clickable Page Navigation Bar */}
-      <PageNavigation
-        activePage={activePage}
-        onSelectPage={handleSelectPage}
-      />
+      {/* Priority 1 & 4: Only show multi-page navigation in Full Mode */}
+      {viewMode === 'full' && (
+        <PageNavigation
+          activePage={activePage}
+          onSelectPage={handleSelectPage}
+        />
+      )}
 
       {/* Deep Link Notification Banner (if user opened a shared link) */}
       {deepLinkData && (
@@ -220,39 +246,58 @@ export default function App() {
         </div>
       )}
 
-      {/* Main Content Area - Render Active Page Only */}
+      {/* Main Content Area */}
       <main className="flex-1 flex flex-col">
-        {/* Universal Definition Pill Bar across all views */}
-        <section id="top-definition-banner" className="w-full bg-slate-900/60 border-b border-slate-800/80">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono font-bold text-[10px] uppercase">
-                  Universal Rule
-                </span>
-                <span className="text-slate-300 font-medium">
-                  Hours reduce to single digits (1–9). Minutes and seconds stay 100% untouched.
-                </span>
-              </div>
-              <div className="flex items-center gap-2 font-mono text-[11px] text-slate-400">
-                <span className="text-slate-500">Quick Example:</span>
-                <strong className="text-amber-400">14:30 → 1+4=5 → H[5]:30</strong>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* Priority 1: Minimal Mode View */}
+        {viewMode === 'minimal' ? (
+          <MinimalModeView
+            clockState={clockState}
+            timeFormat={timeFormat}
+            onToggleTimeFormat={toggleTimeFormat}
+            onOpenShareTime={(h, m) => handleOpenShare(h, m)}
+            onSwitchToFullMode={() => toggleViewMode()}
+          />
+        ) : (
+          <>
+            {/* Priority 2: Strengthened Core Universal Rule Banner */}
+            <section
+              id="top-definition-banner"
+              className="w-full bg-slate-900/90 border-b border-amber-500/30 sticky top-16 z-20 backdrop-blur-md shadow-md py-3 px-4 sm:px-6 lg:px-8"
+            >
+              <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-3">
+                  <span className="px-2.5 py-1 rounded-full bg-amber-500 text-slate-950 font-mono font-extrabold text-[10px] uppercase tracking-wider shadow-sm">
+                    THE CORE RULE
+                  </span>
+                  <span className="text-slate-200 font-medium text-xs sm:text-sm">
+                    Hours reduce to single digits <strong className="text-amber-400 font-mono font-bold">(1–9)</strong>. Minutes and seconds remain <strong className="text-slate-100">100% identical</strong>.
+                  </span>
+                </div>
 
-        {/* PAGE 1: LIVE DIAL & SCRUBBER */}
-        {activePage === 'dial' && (
-          <div className="flex-1 flex flex-col animate-in fade-in duration-200">
-            <LiveClockHero
-              timeFormat={timeFormat}
-              onToggleTimeFormat={toggleTimeFormat}
-              onOpenShareTime={(h, m) => handleOpenShare(h, m)}
-              initialHour={deepLinkData?.hour}
-              initialMinute={deepLinkData?.minute}
-              initialIsLive={deepLinkData === null}
-            />
+                <div className="flex items-center gap-2.5 bg-slate-950/80 px-3.5 py-1.5 rounded-xl border border-slate-800 font-mono text-xs">
+                  <span className="text-slate-400 text-[11px] uppercase tracking-wider">Format:</span>
+                  <span className="text-amber-300 font-bold">
+                    Normal → Calculation → H[Digit]:MM
+                  </span>
+                  <span className="text-slate-600">|</span>
+                  <span className="text-emerald-400 font-bold">
+                    14:30 → 1+4=5 → H[5]:30
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            {/* PAGE 1: LIVE DIAL & SCRUBBER */}
+            {activePage === 'dial' && (
+              <div className="flex-1 flex flex-col animate-in fade-in duration-200">
+                <LiveClockHero
+                  timeFormat={timeFormat}
+                  onToggleTimeFormat={toggleTimeFormat}
+                  onOpenShareTime={(h, m) => handleOpenShare(h, m)}
+                  initialHour={deepLinkData?.hour}
+                  initialMinute={deepLinkData?.minute}
+                  initialIsLive={deepLinkData === null}
+                />
 
             {/* Quick Explore Jump Cards below Dial */}
             <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -434,6 +479,8 @@ export default function App() {
             </div>
           </div>
         </section>
+        </>
+      )}
       </main>
 
       {/* Footer */}

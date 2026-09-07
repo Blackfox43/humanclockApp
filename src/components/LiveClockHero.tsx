@@ -7,8 +7,9 @@ import {
   TRIAD_AXIS,
   getDigitalRootExplanation,
   formatCanonicalExample,
+  formatTwoDigits,
 } from '../utils/vortexMath';
-import { Play, Pause, RotateCcw, Clock, Eye, Sparkles, Layers, Sliders, Info, Share2 } from 'lucide-react';
+import { Play, Pause, RotateCcw, Clock, Eye, Sparkles, Layers, Sliders, Info, Share2, Copy, Check } from 'lucide-react';
 
 interface LiveClockHeroProps {
   timeFormat: TimeFormat;
@@ -42,6 +43,7 @@ export const LiveClockHero: React.FC<LiveClockHeroProps> = ({
   const [showDoublingLines, setShowDoublingLines] = useState<boolean>(true);
   const [showControlTriad, setShowControlTriad] = useState<boolean>(true);
   const [selectedNode, setSelectedNode] = useState<number | null>(null);
+  const [copied, setCopied] = useState<boolean>(false);
 
   // Sync if initialHour or initialMinute changes from outside (e.g. deep link)
   useEffect(() => {
@@ -109,6 +111,20 @@ export const LiveClockHero: React.FC<LiveClockHeroProps> = ({
     setSimulatedHour(now.getHours());
     setSimulatedMinute(now.getMinutes());
     setIsLive(true);
+  };
+
+  const formattedHumanTime = `H[${activeHumanHour}]:${formatTwoDigits(clockState.minute)}`;
+
+  const handleCopyTime = async () => {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(formattedHumanTime);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback
+    }
   };
 
   return (
@@ -243,10 +259,19 @@ export const LiveClockHero: React.FC<LiveClockHeroProps> = ({
             />
           </div>
 
-          {/* Dial Footnote */}
-          <div className="mt-4 text-center text-xs text-slate-400 flex items-center gap-2">
-            <Info className="w-3.5 h-3.5 text-amber-500/70 shrink-0" />
-            <span className="text-[11px] font-mono">9 is anchored at 12 o'clock (0° zenith). Click any digit node to view harmonic properties.</span>
+          {/* Dial Footnote & Impossible-to-miss Active Hour Pill */}
+          <div className="mt-4 flex flex-col items-center gap-2.5 w-full">
+            <div className="flex items-center justify-center gap-2.5 px-4 py-2 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 font-mono text-xs font-bold shadow-md">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
+              <span className="text-slate-300 uppercase tracking-wider text-[11px]">Current Human Hour:</span>
+              <span className="text-sm font-black text-white px-2.5 py-0.5 rounded bg-slate-950 border border-amber-500/50 shadow-inner">
+                H[{activeHumanHour}]
+              </span>
+            </div>
+            <div className="text-center text-xs text-slate-400 flex items-center gap-2">
+              <Info className="w-3.5 h-3.5 text-amber-500/70 shrink-0" />
+              <span className="text-[11px] font-mono">9 is anchored at 12 o'clock (0° zenith). Click any digit node to view harmonic properties.</span>
+            </div>
           </div>
         </div>
 
@@ -327,16 +352,39 @@ export const LiveClockHero: React.FC<LiveClockHeroProps> = ({
                   <span className="w-2 h-2 rounded-full bg-amber-400" />
                   <span>
                     {activeHumanHour === 9
-                      ? 'Polar Apex Node (9 fixed at top)'
-                      : 'Control Axis Triad Node (3 ↔ 6)'}
+                       ? 'Polar Apex Node (9 fixed at top)'
+                       : 'Control Axis Triad Node (3 ↔ 6)'}
                   </span>
                 </div>
               ) : null}
             </div>
 
-            {/* Share Time Action Trigger */}
-            {onOpenShareTime && (
-              <div className="mt-4 pt-4 border-t border-slate-800/80">
+            {/* Priority 5: Big One-Tap Copy Human Time & Share Actions */}
+            <div className="mt-4 pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row items-center gap-2.5">
+              <button
+                type="button"
+                id="hero-readout-copy-btn"
+                onClick={handleCopyTime}
+                className={`w-full flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-mono text-xs sm:text-sm font-bold transition-all shadow-md ${
+                  copied
+                    ? 'bg-emerald-500 text-slate-950'
+                    : 'bg-amber-500 hover:bg-amber-400 text-slate-950 hover:shadow-amber-500/20 active:scale-[0.99]'
+                }`}
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-4 h-4 stroke-[3]" />
+                    <span>Copied {formattedHumanTime}!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4 stroke-[2.5]" />
+                    <span>Copy {formattedHumanTime}</span>
+                  </>
+                )}
+              </button>
+
+              {onOpenShareTime && (
                 <button
                   type="button"
                   id="hero-readout-share-btn"
@@ -346,13 +394,13 @@ export const LiveClockHero: React.FC<LiveClockHeroProps> = ({
                       clockState.minute
                     )
                   }
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-mono font-bold transition-all shadow-sm group"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-mono font-medium transition-colors"
                 >
-                  <Share2 className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
-                  <span>Share H[{activeHumanHour}]:{String(clockState.minute).padStart(2, '0')} to X or Bluesky</span>
+                  <Share2 className="w-4 h-4 text-amber-400" />
+                  <span>Share</span>
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Interactive Scrubbing Slider Control */}

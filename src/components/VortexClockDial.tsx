@@ -340,9 +340,9 @@ export const VortexClockDial: React.FC<VortexClockDialProps> = ({
         {/* The 9 Nodes around the dial */}
         {nodes.map((node) => {
           const isTopPolar = node.num === 9;
-          // Current active human hour node is significantly larger and brighter than other nodes
+          // Priority 3: Current active human hour node is significantly larger and bolder
           const nodeRadius = node.isActive
-            ? size * 0.082
+            ? size * 0.095
             : isTopPolar
             ? size * 0.058
             : size * 0.050;
@@ -370,11 +370,11 @@ export const VortexClockDial: React.FC<VortexClockDialProps> = ({
             textColor = '#cbd5e1';
           }
 
-          // Calculate placement for tiny permanent label "Current Human Hour"
+          // Calculate placement for persistent label "Current Human Hour"
           let labelX = node.x;
-          if (labelX < 62) labelX = 62;
-          if (labelX > size - 62) labelX = size - 62;
-          const labelY = node.y < cy ? node.y + nodeRadius + 14 : node.y - nodeRadius - 14;
+          if (labelX < 65) labelX = 65;
+          if (labelX > size - 65) labelX = size - 65;
+          const labelY = node.y < cy ? node.y + nodeRadius + 16 : node.y - nodeRadius - 16;
 
           return (
             <g
